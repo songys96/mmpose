@@ -52,7 +52,7 @@ def convert_db_to_output(db, batch_size=2, keys=None, is_3d=False):
     return outputs
 
 
-def test_hand_OneHand10K_dataset():
+def test_top_down_OneHand10K_dataset():
     dataset = 'OneHand10KDataset'
     dataset_class = DATASETS.get(dataset)
 
