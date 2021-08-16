@@ -277,7 +277,48 @@ def trans_expand(img):
     img = np.expand_dims(img, axis=0)
     return img
 
-def putCircle(frame):
+def flip_back(output_flipped, target_type='GaussianHeatmap'):
+    """Flip the flipped heatmaps back to the original form.
+
+    Note:
+        batch_size: N
+        num_keypoints: K
+        heatmap height: H
+        heatmap width: W
+
+    Args:
+        output_flipped (np.ndarray[N, K, H, W]): The output heatmaps obtained
+            from the flipped images.
+        flip_pairs (list[tuple()): Pairs of keypoints which are mirrored
+            (for example, left ear -- right ear).
+        target_type (str): GaussianHeatmap or CombinedTarget
+
+    Returns:
+        np.ndarray: heatmaps that flipped back to the original image
+    """
+    assert output_flipped.ndim == 4, \
+        'output_flipped should be [batch_size, num_keypoints, height, width]'
+    shape_ori = output_flipped.shape
+    channels = 1
+    if target_type.lower() == 'CombinedTarget'.lower():
+        channels = 3
+        output_flipped[:, 1::3, ...] = -output_flipped[:, 1::3, ...]
+    output_flipped = output_flipped.reshape(shape_ori[0], -1, channels,
+                                            shape_ori[2], shape_ori[3])
+    output_flipped_back = output_flipped.copy()
+
+    # Swap left-right parts
+    flip_pairs = [[5,6],[7,8],[9,10],[11,12]]
+    for left, right in flip_pairs:
+        output_flipped_back[:, left, ...] = output_flipped[:, right, ...]
+        output_flipped_back[:, right, ...] = output_flipped[:, left, ...]
+    output_flipped_back = output_flipped_back.reshape(shape_ori)
+    # Flip horizontally
+    output_flipped_back = output_flipped_back[..., ::-1]
+    output_flipped_back[:, :, :, 1:] = output_flipped_back[:, :, :, :-1]
+    return output_flipped_back
+
+def putCircle(frame, coords):
     thr = 0.5
     for coord in coords:
         print(coord)
@@ -287,6 +328,8 @@ def putCircle(frame):
         if t > thr and x > 0 and y > 0:
             frame = cv2.circle(frame, (x, y), radius=0, color=(0, 0, 255), thickness=-1)
     return frame
+
+
 
 def main(video, save="", show=False):
     onnx_file = '/home/butlely/PycharmProjects/mmlab/mmpose/poodle_w32/save_model.onnx'
@@ -328,18 +371,24 @@ def main(video, save="", show=False):
         img = trans_normalize(img, mean=img_metas[0]['mean'], std=img_metas[0]['std'])
         img = trans_expand(img)
         img = img.astype(np.float32)
-        print(img[0,0,115:120,115:120])
-        raise ValueError
+
+        img_flipped = np.flip(img, 3)
         # run model
         heatmap = ort_session.run(None, {net_feed_input[0]: img})
-        print(heatmap[0][0,0,:5,:5])
-        raise ValueError
-        predict = decode(img_metas, heatmap[0])
+        heatmap = np.round(heatmap[0],4)
+        # okay!!
+        heatmap_flipped = ort_session.run(None, {net_feed_input[0]: img_flipped})
+        heatmap_flipped = heatmap_flipped[0]
+        heatmap_flipped = flip_back(heatmap_flipped)
+        output_heatmap = (heatmap + heatmap_flipped) * 0.5
+
+        predict = decode(img_metas, output_heatmap)
         coords = predict['preds'][0]
-        frame = putCircle(frame)
+
+        frame = putCircle(frame, coords)
 
         # break
-        # 프레임 출력
+        # 프레임 출[0,0,20:25,20:25]력
         if show:
             cv2.imshow("frame", frame)
 

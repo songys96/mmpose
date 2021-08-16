@@ -30,7 +30,6 @@ python3 tools/pytorch2onnx.py \
     configs/animal/2d_kpt_sview_rgb_img/topdown_heatmap/animalpose/custom_hrnet_w32_animalpose_256x256.py \
     poodle_w32/best.pth \
     --verify\
-    --show\
     --output-file  poodle_w32/save_model.onnx\
     --shape 1 3 256 256
 
