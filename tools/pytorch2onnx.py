@@ -136,6 +136,8 @@ if __name__ == '__main__':
     cfg = mmcv.Config.fromfile(args.config)
     # build the model
     model = build_posenet(cfg.model)
+    print(list(model.children()))
+    raise ValueError
     model = _convert_batchnorm(model)
 
     # onnx.export does not support kwargs

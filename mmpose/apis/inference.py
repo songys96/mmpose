@@ -33,7 +33,7 @@ def init_pose_model(config, checkpoint=None, device='cuda:0'):
         raise TypeError('config must be a filename or Config object, '
                         f'but got {type(config)}')
     config.model.pretrained = None
-    model = build_posenet(config.model)
+    model =  build_posenet(config.model)
     if checkpoint is not None:
         # load model checkpoint
         load_checkpoint(model, checkpoint, map_location=device)
@@ -166,7 +166,6 @@ def _inference_single_pose_model(model,
         ndarray[NxKx3]: Predicted pose x, y, score.
         heatmap[N, K, H, W]: Model output heatmap.
     """
-
     cfg = model.cfg
     device = next(model.parameters()).device
 
@@ -735,10 +734,15 @@ def vis_pose_result(model,
         pose_kpt_color = palette[[0] * 9]
 
     elif dataset in 'AnimalPoseDataset':
-        skeleton = [[0, 1], [1, 2], [2, 3], [0, 3], [1, 4], [4, 13], [4, 5], [4, 6], [5, 7], [6, 8], [13, 9], [13, 10], [9, 11], [10, 12], [13, 14]]
+        skeleton = [[0,0]]#[0, 1], [1, 2], [2, 3], [0, 4], [1, 4], [3, 4],]
+                    # [4, 13],
+                    # [4, 5], [4, 6], [5, 7], [6, 8],
+                    # [13, 9], [13, 10], [9, 11], [10, 12],
+                    # [13, 14]]
 
-        pose_kpt_color = palette[[15] * 4 + [4] + [0] * 4 + [9] * 4 + [1] * 2]
-        pose_limb_color = palette[[15] * 5 + [0] * 9 + [9] * 1]
+        pose_kpt_color = palette[[15] * 4 + [4] + [0] * 4 + [9] * 4 + [11] * 2]
+        # pose_limb_color = palette[[15] * 6 + [0] * 1 + [8] * 4 + [11] * 4 + [9] * 1]
+        pose_limb_color = palette[[0]]
 
     else:
         raise NotImplementedError()

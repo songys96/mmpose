@@ -1,6 +1,7 @@
 import warnings
-import cv2
+
 import mmcv
+import numpy
 import numpy as np
 from mmcv.image import imwrite
 from mmcv.visualization.image import imshow
@@ -17,6 +18,8 @@ except ImportError:
                   'Please install mmcv>=1.1.4')
     from mmpose.core import auto_fp16
 
+import matplotlib.pyplot as plt
+from PIL import Image
 
 @POSENETS.register_module()
 class TopDown(BasePose):
@@ -146,21 +149,6 @@ class TopDown(BasePose):
         if self.with_keypoint:
             output = self.keypoint_head(output) ## [64,15,64,64]
 
-        ############################################################
-        ## to see result on opencv
-        def checkResult(img, kp, img_metas):
-            img_meta = cv2.imread(img_metas[0]['image_file'])
-            img_cv = cv2.imread(img_metas[0]['image_file'], cv2.IMREAD_COLOR)
-            img_cv = cv2.resize(img_cv, (256,256))
-            cv2.imshow('image', img_cv)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-        #     # cv2.imread(img_meta[])
-        #     kp_np = kp[0].cpu().detach().numpy()
-        #     self.kp_head = kp_np
-        checkResult(img, output, img_metas)
-        #############################################################
-        # if return loss
         losses = dict()
         if self.with_keypoint:
             keypoint_losses = self.keypoint_head.get_loss(
@@ -180,14 +168,14 @@ class TopDown(BasePose):
             assert 'bbox_id' in img_metas[0]
 
         result = {}
-
+        print(img.shape)
         features = self.backbone(img)
         if self.with_neck:
             features = self.neck(features)
         if self.with_keypoint:
             output_heatmap = self.keypoint_head.inference_model(
                 features, flip_pairs=None)
-
+            print(output_heatmap)
         if self.test_cfg.get('flip_test', True):
             img_flipped = img.flip(3)
             features_flipped = self.backbone(img_flipped)
@@ -199,6 +187,8 @@ class TopDown(BasePose):
                 output_heatmap = (output_heatmap +
                                   output_flipped_heatmap) * 0.5
 
+        # from here can get keypoint
+        np.save("/home/butlely/Desktop/Dataset/aihub/test/mmpose.npy", output_heatmap)
         if self.with_keypoint:
             keypoint_result = self.keypoint_head.decode(
                 img_metas, output_heatmap, img_size=[img_width, img_height])
@@ -208,6 +198,9 @@ class TopDown(BasePose):
                 output_heatmap = None
 
             result['output_heatmap'] = output_heatmap
+
+        print(keypoint_result['preds'])
+        raise ValueError
 
         return result
 

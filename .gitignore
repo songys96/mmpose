@@ -130,3 +130,6 @@ docs_zh-CN/modelzoo.md
 *.pth
 
 *.DS_Store
+*.mp4
+*/*.mp4
+poodle_w32/

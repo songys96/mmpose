@@ -9,8 +9,8 @@ load_from = None
 resume_from = None
 dist_params = dict(backend='nccl')
 workflow = [('train', 1)]
-checkpoint_config = dict(interval=5)
-evaluation = dict(interval=5, metric='mAP', key_indicator='AP')
+checkpoint_config = dict(interval=1)
+evaluation = dict(interval=1, metric='mAP', key_indicator='AP')
 
 optimizer = dict(
     type='Adam',
@@ -26,7 +26,7 @@ lr_config = dict(
     step=[170, 200])
 total_epochs = 210
 log_config = dict(
-    interval=1,
+    interval=10,
     hooks=[
         dict(type='TextLoggerHook'),
         # dict(type='TensorboardLoggerHook')
@@ -45,7 +45,7 @@ channel_cfg = dict(
 # model settings
 model = dict(
     type='TopDown',
-    pretrained='/home/butlely/PycharmProjects/mmlab/mmpose/work_dirs/custom_res101_animalpose_256x256/resnet101_cat_best_10epoch.pth',
+    pretrained='/home/butlely/PycharmProjects/mmlab/mmpose/work_dirs/custom_res101_animalpose_256x256/epoch_3.pth',
     backbone=dict(type='ResNet', depth=101),
     keypoint_head=dict(
         type='TopdownHeatmapSimpleHead',

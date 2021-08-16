@@ -3,8 +3,8 @@ load_from = None
 resume_from = None
 dist_params = dict(backend='nccl')
 workflow = [('train', 1)]
-checkpoint_config = dict(interval=10)
-evaluation = dict(interval=10, metric='mAP', key_indicator='AP')
+checkpoint_config = dict(interval=1)
+evaluation = dict(interval=1, metric='mAP', key_indicator='AP')
 
 optimizer = dict(
     type='Adam',
@@ -18,22 +18,22 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=0.001,
     step=[170, 200])
-total_epochs = 210
+total_epochs = 10
 log_config = dict(
-    interval=1,
+    interval=100,
     hooks=[
         dict(type='TextLoggerHook'),
         # dict(type='TensorboardLoggerHook')
     ])
 
 channel_cfg = dict(
-    num_output_channels=20,
-    dataset_joints=20,
+    num_output_channels=15,
+    dataset_joints=15,
     dataset_channel=[
-        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     ],
     inference_channel=[
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
     ])
 
 # model settings
@@ -103,10 +103,10 @@ data_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='TopDownRandomFlip', flip_prob=0.5),
-    dict(
-        type='TopDownHalfBodyTransform',
-        num_joints_half_body=8,
-        prob_half_body=0.3),
+    # dict(
+    #     type='TopDownHalfBodyTransform',
+    #     num_joints_half_body=8,
+    #     prob_half_body=0.3),
     dict(
         type='TopDownGetRandomScaleRotation', rot_factor=40, scale_factor=0.5),
     dict(type='TopDownAffine'),
@@ -144,28 +144,28 @@ val_pipeline = [
 
 test_pipeline = val_pipeline
 
-data_root = 'data/animalpose'
+data_root = '/home/butlely/Desktop/Dataset/aihub'
 data = dict(
     samples_per_gpu=64,
-    workers_per_gpu=2,
+    workers_per_gpu=4,
     val_dataloader=dict(samples_per_gpu=32),
     test_dataloader=dict(samples_per_gpu=32),
     train=dict(
         type='AnimalPoseDataset',
-        ann_file=f'{data_root}/annotations/animalpose_train.json',
-        img_prefix=f'{data_root}/',
+        ann_file=f'{data_root}/COCO/poodle_256/coco_tr.json',
+        img_prefix=f'{data_root}/data_resize_256/',
         data_cfg=data_cfg,
         pipeline=train_pipeline),
     val=dict(
         type='AnimalPoseDataset',
-        ann_file=f'{data_root}/annotations/animalpose_val.json',
-        img_prefix=f'{data_root}/',
+        ann_file=f'{data_root}/COCO/poodle_256/coco_va.json',
+        img_prefix=f'{data_root}/data_resize_256/',
         data_cfg=data_cfg,
         pipeline=val_pipeline),
     test=dict(
         type='AnimalPoseDataset',
-        ann_file=f'{data_root}/annotations/animalpose_val.json',
-        img_prefix=f'{data_root}/',
+        ann_file=f'{data_root}/COCO/poodle_256/coco_te.json',
+        img_prefix=f'{data_root}/data_resize_256/',
         data_cfg=data_cfg,
         pipeline=val_pipeline),
 )

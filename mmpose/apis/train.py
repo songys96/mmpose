@@ -78,6 +78,7 @@ def train_model(model,
                 broadcast_buffers=False,
                 find_unused_parameters=find_unused_parameters)
     else:
+
         model = MMDataParallel(
             model.cuda(cfg.gpu_ids[0]), device_ids=cfg.gpu_ids)
 
@@ -108,10 +109,16 @@ def train_model(model,
         else:
             optimizer_config = cfg.optimizer_config
 
+    # add custom hooks
+    custom_hooks = [
+        dict(type='MyHook')
+    ]
+
     # register hooks
     runner.register_training_hooks(cfg.lr_config, optimizer_config,
                                    cfg.checkpoint_config, cfg.log_config,
-                                   cfg.get('momentum_config', None))
+                                   cfg.get('momentum_config', None),
+                                   custom_hooks_config=custom_hooks)
     if distributed:
         runner.register_hook(DistSamplerSeedHook())
 

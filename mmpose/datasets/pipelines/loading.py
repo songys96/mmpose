@@ -28,6 +28,5 @@ class LoadImageFromFile:
 
         if img is None:
             raise ValueError(f'Fail to read {image_file}')
-
         results['img'] = img
         return results
