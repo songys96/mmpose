@@ -1,6 +1,7 @@
 import torch
 import onnx
 import onnxruntime
+from onnx import numpy_helper
 import warnings
 import cv2
 import math
@@ -9,16 +10,19 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 from test_utils import _get_max_preds
+from test_transforms import get_affine_transform
 
 img_metas = [
     {
         "image_file": '',
         "center": np.array([128.5, 128.5]),
-        "scale": np.array([1.6, 1.6]),
+        "scale": np.array([1.6062499, 1.6062499]),
         "rotation": 0,
         "bbox_score": 1,
         'flip_pairs': [[5, 6], [7, 8], [9, 10], [11, 12]],
-        "bbox_id": 0
+        "bbox_id": 0,
+        "mean": [0.485, 0.456, 0.406],
+        "std": [0.229, 0.224, 0.225]
      }
 ]
 
@@ -251,15 +255,50 @@ def show(img, pred):
     plt.scatter([20,30],[30,40])
     plt.show()
 
+def trans_affine(img, img_metas):
+    trans = get_affine_transform(img_metas[0]['center'], img_metas[0]['scale'], img_metas[0]['rotation'], (256, 256))
+    img = cv2.warpAffine(
+        img,
+        trans, (256, 256),
+        flags=cv2.INTER_LINEAR)
+    return img
 
+def trans_reshape(img):
+    img = img.astype(np.float16)
+    img = img.transpose(2,0,1)
+    img = img/255
+    return img
 
+def trans_normalize(img, mean, std):
+    img = ((img.transpose()-np.array(mean))/std).transpose()
+    return img
+
+def trans_expand(img):
+    img = np.expand_dims(img, axis=0)
+    return img
+
+def putCircle(frame):
+    thr = 0.5
+    for coord in coords:
+        print(coord)
+        x = int(coord[0])
+        y = int(coord[1])
+        t = coord[2]
+        if t > thr and x > 0 and y > 0:
+            frame = cv2.circle(frame, (x, y), radius=0, color=(0, 0, 255), thickness=-1)
+    return frame
 
 def main(video, save="", show=False):
     onnx_file = '/home/butlely/PycharmProjects/mmlab/mmpose/poodle_w32/save_model.onnx'
     model = onnx.load(onnx_file)
     check = onnx.checker.check_model(model)
     graph = onnx.helper.printable_graph(model.graph)
-    #
+    # weights = model.graph.initializer
+    input_all = [node.name for node in model.graph.input]
+    input_initializer = [
+        node.name for node in model.graph.initializer
+    ]
+    net_feed_input = list(set(input_all) - set(input_initializer))
     ort_session = onnxruntime.InferenceSession(onnx_file)
 
     input_name = ort_session.get_inputs()[0].name
@@ -281,15 +320,25 @@ def main(video, save="", show=False):
             break
 
         # my code
-        img = frame.transpose(2,0,1).astype(np.float32)
-        img = img.reshape(1,3,256,256)
-        result = ort_session.run(None, {input_name: img})
-        heatmap = result[0]
-        res = decode(img_metas, heatmap)
-        coord = res['preds'][0]
-        x, y = alignCoord(coord)
-        print(x)
-        break
+        img = frame.copy()
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # transform
+        img = trans_affine(img, img_metas)
+        img = trans_reshape(img)
+        img = trans_normalize(img, mean=img_metas[0]['mean'], std=img_metas[0]['std'])
+        img = trans_expand(img)
+        img = img.astype(np.float32)
+        print(img[0,0,115:120,115:120])
+        raise ValueError
+        # run model
+        heatmap = ort_session.run(None, {net_feed_input[0]: img})
+        print(heatmap[0][0,0,:5,:5])
+        raise ValueError
+        predict = decode(img_metas, heatmap[0])
+        coords = predict['preds'][0]
+        frame = putCircle(frame)
+
+        # break
         # 프레임 출력
         if show:
             cv2.imshow("frame", frame)
@@ -313,7 +362,7 @@ def main(video, save="", show=False):
     cv2.destroyAllWindows()
 
 vid_path = "/home/butlely/PycharmProjects/mmlab/mmpose/poodle_w32/poodle_test_256.mp4"
-main(vid_path)
+main(vid_path, show=True)
 raise ValueError
 
 
