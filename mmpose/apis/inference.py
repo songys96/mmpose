@@ -262,8 +262,7 @@ def _inference_single_pose_model(model,
         flip_pairs = [[3, 4], [5, 6]]
 
     elif dataset in 'AnimalPoseDataset':
-        flip_pairs = [[0, 1], [2, 3], [8, 9], [10, 11], [12, 13], [14, 15],
-                      [16, 17], [18, 19]]
+        flip_pairs = [[5,6],[7,8],[9,10],[11,12]]
     else:
         raise NotImplementedError()
 
@@ -542,7 +541,7 @@ def vis_pose_result(model,
         model = model.module
 
     palette = np.array([[255, 128, 0], [255, 153, 51], [255, 178, 102],
-                        [230, 230, 0], [255, 153, 255], [153, 204, 255],
+                        [230, 230, 0], [0, 0, 0], [153, 204, 255],
                         [255, 102, 255], [255, 51, 255], [102, 178, 255],
                         [51, 153, 255], [255, 153, 153], [255, 102, 102],
                         [255, 51, 51], [153, 255, 153], [102, 255, 102],
@@ -736,13 +735,10 @@ def vis_pose_result(model,
         pose_kpt_color = palette[[0] * 9]
 
     elif dataset in 'AnimalPoseDataset':
-        skeleton = [[1, 2], [1, 3], [2, 4], [1, 5], [2, 5], [5, 6], [6, 8],
-                    [7, 8], [6, 9], [9, 13], [13, 17], [6, 10], [10, 14],
-                    [14, 18], [7, 11], [11, 15], [15, 19], [7, 12], [12, 16],
-                    [16, 20]]
+        skeleton = [[0, 1], [1, 2], [2, 3], [0, 3], [1, 4], [4, 13], [4, 5], [4, 6], [5, 7], [6, 8], [13, 9], [13, 10], [9, 11], [10, 12], [13, 14]]
 
-        pose_kpt_color = palette[[15] * 5 + [0] * 7 + [9] * 8]
-        pose_limb_color = palette[[15] * 5 + [0] * 3 + [0, 9, 9] * 4]
+        pose_kpt_color = palette[[15] * 4 + [4] + [0] * 4 + [9] * 4 + [1] * 2]
+        pose_limb_color = palette[[15] * 5 + [0] * 9 + [9] * 1]
 
     else:
         raise NotImplementedError()

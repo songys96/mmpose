@@ -136,6 +136,7 @@ def flip_back(output_flipped, flip_pairs, target_type='GaussianHeatmap'):
     output_flipped_back = output_flipped.copy()
 
     # Swap left-right parts
+    flip_pairs = [[5,6],[7,8],[9,10],[11,12]]
     for left, right in flip_pairs:
         output_flipped_back[:, left, ...] = output_flipped[:, right, ...]
         output_flipped_back[:, right, ...] = output_flipped[:, left, ...]

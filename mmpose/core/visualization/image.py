@@ -126,6 +126,9 @@ def imshow_keypoints(img,
     for kpts in pose_result:
         # draw each point on image
         if pose_kpt_color is not None:
+            print("---")
+            pose_kpt_color = pose_kpt_color[:15]
+            print(len(kpts))
             assert len(pose_kpt_color) == len(kpts)
             for kid, kpt in enumerate(kpts):
                 x_coord, y_coord, kpt_score = int(kpt[0]), int(kpt[1]), kpt[2]
@@ -151,6 +154,7 @@ def imshow_keypoints(img,
         # draw limbs
         if skeleton is not None and pose_limb_color is not None:
             assert len(pose_limb_color) == len(skeleton)
+            print(skeleton)
             for sk_id, sk in enumerate(skeleton):
                 pos1 = (int(kpts[sk[0] - 1, 0]), int(kpts[sk[0] - 1, 1]))
                 pos2 = (int(kpts[sk[1] - 1, 0]), int(kpts[sk[1] - 1, 1]))

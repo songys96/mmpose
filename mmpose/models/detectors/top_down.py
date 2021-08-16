@@ -1,5 +1,5 @@
 import warnings
-
+import cv2
 import mmcv
 import numpy as np
 from mmcv.image import imwrite
@@ -66,6 +66,7 @@ class TopDown(BasePose):
             self.keypoint_head = builder.build_head(keypoint_head)
 
         self.init_weights(pretrained=pretrained)
+        self.kp_head = None
 
     @property
     def with_neck(self):
@@ -139,12 +140,26 @@ class TopDown(BasePose):
 
     def forward_train(self, img, target, target_weight, img_metas, **kwargs):
         """Defines the computation performed at every call when training."""
-        output = self.backbone(img)
+        output = self.backbone(img)   ## [64,2048,8,8]
         if self.with_neck:
             output = self.neck(output)
         if self.with_keypoint:
-            output = self.keypoint_head(output)
+            output = self.keypoint_head(output) ## [64,15,64,64]
 
+        ############################################################
+        ## to see result on opencv
+        def checkResult(img, kp, img_metas):
+            img_meta = cv2.imread(img_metas[0]['image_file'])
+            img_cv = cv2.imread(img_metas[0]['image_file'], cv2.IMREAD_COLOR)
+            img_cv = cv2.resize(img_cv, (256,256))
+            cv2.imshow('image', img_cv)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        #     # cv2.imread(img_meta[])
+        #     kp_np = kp[0].cpu().detach().numpy()
+        #     self.kp_head = kp_np
+        checkResult(img, output, img_metas)
+        #############################################################
         # if return loss
         losses = dict()
         if self.with_keypoint:

@@ -64,7 +64,6 @@ class AnimalPoseDataset(AnimalBaseDataset):
                  test_mode=False):
         super().__init__(
             ann_file, img_prefix, data_cfg, pipeline, test_mode=test_mode)
-
         self.use_gt_bbox = data_cfg['use_gt_bbox']
         self.bbox_file = data_cfg['bbox_file']
         self.det_bbox_thr = data_cfg.get('det_bbox_thr', 0.0)
@@ -79,18 +78,15 @@ class AnimalPoseDataset(AnimalBaseDataset):
         self.oks_thr = data_cfg['oks_thr']
         self.vis_thr = data_cfg['vis_thr']
 
-        self.ann_info['flip_pairs'] = [[0, 1], [2, 3], [8, 9], [10, 11],
-                                       [12, 13], [14, 15], [16, 17], [18, 19]]
+        self.ann_info['flip_pairs'] = [[5, 6], [7, 8], [9, 10], [11, 12]]
 
-        self.ann_info['upper_body_ids'] = (0, 1, 2, 3, 4, 5, 7, 8, 9, 12, 13,
-                                           16, 17)
-        self.ann_info['lower_body_ids'] = (6, 10, 11, 14, 15, 18, 19)
+        self.ann_info['upper_body_ids'] = (0, 1, 2, 3, 4, 5, 6, 7, 8, )
+        self.ann_info['lower_body_ids'] = (9, 10, 11, 12, 13, 14)
 
         self.ann_info['use_different_joint_weights'] = False
         self.ann_info['joint_weights'] = np.array(
             [
-                1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.2, 1.2, 1.2,
-                1.2, 1.5, 1.5, 1.5, 1.5
+                1.5, 1.5, 1.5, 1.5, 1.5, 1.2, 1.2, 1., 1.2, 1.2, 1., 1., 1., 1.5, 1.,
             ],
             dtype=np.float32).reshape((self.ann_info['num_joints'], 1))
 
@@ -99,7 +95,7 @@ class AnimalPoseDataset(AnimalBaseDataset):
         # 'cocoapi/blob/master/PythonAPI/pycocotools/cocoeval.py#L523'
         self.sigmas = np.array([
             .25, .25, .26, .35, .35, 1.0, 1.0, 1.0, 1.07, 1.07, 1.07, 1.07,
-            .87, .87, .87, .87, .89, .89, .89, .89
+            .87, .87, .87
         ]) / 10.0
 
         self.coco = COCO(ann_file)
@@ -165,11 +161,10 @@ class AnimalPoseDataset(AnimalBaseDataset):
             y1 = max(0, y)
             x2 = min(width - 1, x1 + max(0, w - 1))
             y2 = min(height - 1, y1 + max(0, h - 1))
-            if ('area' not in obj or obj['area'] > 0) and x2 > x1 and y2 > y1:
+            if ('area' not in obj or obj['area'] >= 0) and x2 > x1 and y2 > y1:
                 obj['clean_bbox'] = [x1, y1, x2 - x1, y2 - y1]
                 valid_objs.append(obj)
         objs = valid_objs
-
         bbox_id = 0
         rec = []
         for obj in objs:
@@ -202,7 +197,6 @@ class AnimalPoseDataset(AnimalBaseDataset):
                 'bbox_id': bbox_id
             })
             bbox_id = bbox_id + 1
-
         return rec
 
     def evaluate(self, outputs, res_folder, metric='mAP', **kwargs):
